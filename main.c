@@ -7,11 +7,23 @@
 
 #include "main.h"
 #include "controller.h"
+#include "file.h"
 #include "input.h"
 #include "output.h"
 
-int main(void) {
+int main(int argc, char *argv[]) {
   hex_editor_t editor = {0};
+
+  // El archivo es opcional
+  if (argc > 2) {
+    fprintf(stderr, "[!] Uso: %s [archivo_opcional]\n", argv[0]);
+    return EXIT_FAILURE;
+  }
+
+  // Guardar nombre del archivo si se proporciona
+  if (argc == 2) {
+    editor.filename = argv[1];
+  }
 
   // Inicialización del editor
   if (controller_Init(&editor) != 0) {

@@ -22,4 +22,4 @@
 uint8_t controller_Init(hex_editor_t *editor);
 void controller_Update(hex_editor_t *editor, uint8_t user_input);
 
-#endif
+#endif // CONTROLLER_H

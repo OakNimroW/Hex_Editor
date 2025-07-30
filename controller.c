@@ -9,6 +9,7 @@
 // * void getmaxyx(const WINDOW *win, int *y, int *x);
 
 #include "controller.h"
+#include "file.h"
 #include "input.h"
 #include "output.h"
 
@@ -18,6 +19,7 @@
 
 static void exitFn(hex_editor_t *editor) {
   editor->running = 0; // Terminar el bucle principal
+  file_Cleanup(editor);
   input_Cleanup(editor);
   output_Cleanup(editor);
   endwin();
@@ -52,12 +54,8 @@ void controller_WaitingCommandFn(hex_editor_t *editor, uint8_t command) {
     break;
 
   default:
-    // Solo mostrar mensaje de error para caracteres imprimibles
     if (command >= 32 && command <= 126) {
-      char error_msg[31] = {0};
-      snprintf(error_msg, sizeof(error_msg), "[!] Comando no encontrado: '%c'",
-               command);
-      output_ShowMessage(editor, error_msg);
+      output_ShowMessage(editor, "[!] Comando no encontrado");
     }
     break;
   }
@@ -98,16 +96,25 @@ uint8_t controller_Init(hex_editor_t *editor) {
     return 1; // Error: editor nulo
   }
 
-  // Inicializar el estado del editor
+  // Inicializar estado del editor
   editor->current_state = State_WaitingCommand;
   editor->running = 1;
+  editor->current_offset = 0;
+
+  // Cargar archivo si se proporciona
+  if (editor->filename) {
+    if (file_Load(editor) != 0) {
+      // No terminar el programa, solo mostrar error
+      // El editor seguirá funcionando sin archivo
+      output_ShowMessage(editor, "[+] No se ha cargado un archivo.");
+    }
+  }
 
   // Inicializar ncurses y ventanas
   initscr();            // Inicializar ncurses
   cbreak();             // Desactivar el modo de línea
   noecho();             // No mostrar la entrada del usuario
   keypad(stdscr, TRUE); // Habilitar teclas especiales
-  curs_set(2);          // Mostrar el cursor
 
   getmaxyx(stdscr, editor->max_y, editor->max_x);
 
@@ -124,6 +131,7 @@ uint8_t controller_Init(hex_editor_t *editor) {
   }
 
   // Mostrar interfaz inicial
+  output_DisplayHexContent(editor);
   output_Refresh(editor);
   input_Refresh(editor);
 
@@ -140,6 +148,7 @@ void controller_Update(hex_editor_t *editor, uint8_t user_input) {
   StateFunctions[editor->current_state](editor, user_input);
 
   // Actualizar la salidas (ventanas)
+  output_DisplayHexContent(editor);
   output_Refresh(editor);
   input_Refresh(editor);
 

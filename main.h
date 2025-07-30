@@ -9,6 +9,7 @@
 #define MAIN_H
 
 #include <ncurses.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -32,6 +33,10 @@ typedef struct {
   editor_state_t current_state; // Estado actual del editor
   int running;                  // Indica si el editor está en ejecución
   int max_y, max_x;             // Dimensiones de la ventana principal
+  char *filename;               // Nombre del archivo abierto
+  uint8_t *file_data;           // Datos del archivo en memoria
+  size_t file_size;             // Tamaño del archivo
+  size_t current_offset;        // Offset actual para navegación
 } hex_editor_t;
 
 #endif

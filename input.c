@@ -26,13 +26,13 @@ uint8_t input_Init(hex_editor_t *editor) {
   uint16_t cmd_height = (editor->max_y * CMD_WINDOW_PERCENT) / 100;
   uint16_t hex_height = editor->max_y - cmd_height;
 
-  // Crear ventana de commandos
+  // Crear ventana de comandos
   editor->command_window = newwin(cmd_height, editor->max_x, hex_height, 0);
   if (editor->command_window == NULL) {
     return -1;
   }
 
-  // Configurar bonde y titulo
+  // Configurar borde y título
   box(editor->command_window, 0, 0);
   mvwprintw(editor->command_window, 0, 2, " COMMANDS ");
 
@@ -50,7 +50,7 @@ uint8_t input_GetCommand(hex_editor_t *editor) {
   wmove(editor->command_window, 3, 22);
   wrefresh(editor->command_window);
 
-  // Leer comando del usuario
+  // Leer caracter de la ventana específica
   return wgetch(editor->command_window);
 }
 
@@ -65,20 +65,19 @@ void input_ShowCommand(hex_editor_t *editor, uint8_t command) {
 
 // Refrescar ventana de comandos
 void input_Refresh(hex_editor_t *editor) {
-  // Limpiar linea de comandos
+  // Limpiar línea de comando
   mvwprintw(editor->command_window, 3, 2, "Ingresa un comando: ");
 
-  // Redibujar box
+  // Redibujar borde y título
   box(editor->command_window, 0, 0);
   mvwprintw(editor->command_window, 0, 2, " COMMANDS ");
 
-  // Actualizar ventana
   wrefresh(editor->command_window);
 }
 
-// Limpiar ventana de comandos
+// Limpiar recursos de la ventana de comandos
 void input_Cleanup(hex_editor_t *editor) {
-  if (editor->command_window != NULL) {
+  if (editor->command_window) {
     delwin(editor->command_window);
     editor->command_window = NULL;
   }
