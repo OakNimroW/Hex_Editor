@@ -34,8 +34,6 @@ int main(void) {
     controller_Update(&editor, ch);
   }
 
-  controller_Update(&editor, ch);
-
   printf("\n[+] Editor cerrado correctamente.\n\n");
   return EXIT_SUCCESS;
 }

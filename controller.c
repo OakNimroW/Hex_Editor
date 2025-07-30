@@ -52,8 +52,12 @@ void controller_WaitingCommandFn(hex_editor_t *editor, uint8_t command) {
     break;
 
   default:
+    // Solo mostrar mensaje de error para caracteres imprimibles
     if (command >= 32 && command <= 126) {
-      output_ShowMessage(editor, "[!] Comando no encontrado");
+      char error_msg[31] = {0};
+      snprintf(error_msg, sizeof(error_msg), "[!] Comando no encontrado: '%c'",
+               command);
+      output_ShowMessage(editor, error_msg);
     }
     break;
   }
@@ -103,6 +107,7 @@ uint8_t controller_Init(hex_editor_t *editor) {
   cbreak();             // Desactivar el modo de línea
   noecho();             // No mostrar la entrada del usuario
   keypad(stdscr, TRUE); // Habilitar teclas especiales
+  curs_set(2);          // Mostrar el cursor
 
   getmaxyx(stdscr, editor->max_y, editor->max_x);
 
@@ -137,4 +142,7 @@ void controller_Update(hex_editor_t *editor, uint8_t user_input) {
   // Actualizar la salidas (ventanas)
   output_Refresh(editor);
   input_Refresh(editor);
+
+  // Mostrar el comando inmediatamente
+  input_ShowCommand(editor, user_input);
 }

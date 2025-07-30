@@ -47,11 +47,20 @@ uint8_t input_Init(hex_editor_t *editor) {
 // Obtener comando del usuario
 uint8_t input_GetCommand(hex_editor_t *editor) {
   // Posicionar cursor
-  wmove(editor->command_window, 3, 23);
+  wmove(editor->command_window, 3, 22);
   wrefresh(editor->command_window);
 
   // Leer comando del usuario
   return wgetch(editor->command_window);
+}
+
+// Nueva función para mostrar un carácter en la línea de comandos
+void input_ShowCommand(hex_editor_t *editor, uint8_t command) {
+  if (command >= 32 && command <= 126) {
+    // Escribir en ventana de comandos el caracter ingresado.
+    mvwprintw(editor->command_window, 3, 22, "%c", command);
+    wrefresh(editor->command_window);
+  }
 }
 
 // Refrescar ventana de comandos
