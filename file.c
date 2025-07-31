@@ -56,6 +56,40 @@ int file_Load(hex_editor_t *editor) {
   return 0;
 }
 
+int file_Save(hex_editor_t *editor) {
+  if (!editor) {
+    return 1;
+  }
+
+  if (!editor->filename) {
+    input_ShowStatusMessage(editor, "[!] Error: No hay nombre de archivo");
+    return 1;
+  }
+
+  if (!editor->file_data || editor->file_size == 0) {
+    input_ShowStatusMessage(editor, "[!] Error: No hay datos para guardar");
+    return 1;
+  }
+
+  FILE *file = fopen(editor->filename, "wb");
+  if (!file) {
+    input_ShowStatusMessage(
+        editor, "[!] Error: No se pudo crear/abrir el archivo para escritura");
+    return 1;
+  }
+
+  size_t bytes_written = fwrite(editor->file_data, 1, editor->file_size, file);
+  fclose(file);
+
+  if (bytes_written != editor->file_size) {
+    input_ShowStatusMessage(
+        editor, "[!] Error: No se pudieron escribir todos los datos");
+    return 1;
+  }
+
+  return 0; // Éxito
+}
+
 void file_Cleanup(hex_editor_t *editor) {
   if (editor && editor->file_data) {
     free(editor->file_data);

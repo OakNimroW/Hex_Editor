@@ -243,15 +243,6 @@ void controller_WaitingCommandFn(hex_editor_t *editor, uint8_t command) {
     if (command >= 32 && command <= 126) {
       input_ShowStatusMessage(editor, "[!] Comando no encontrado");
     }
-#ifdef DEBUG
-    if (command > 0) {
-      // Para debugging: mostrar códigos de caracteres no imprimibles
-      char debug_msg[50];
-      snprintf(debug_msg, sizeof(debug_msg), "[DEBUG] Código recibido: %d",
-               command);
-      input_ShowStatusMessage(editor, debug_msg);
-    }
-#endif
     break;
   }
 }
@@ -350,7 +341,11 @@ void controller_EditByteFn(hex_editor_t *editor, uint8_t user_input) {
 
 void controller_SaveFileFn(hex_editor_t *editor, uint8_t user_input) {
   (void)user_input; // Ignorar entrada del usuario en este estado
-  input_ShowStatusMessage(editor, "[+] Archivo guardado exitosamente");
+
+  if (file_Save(editor) == 0) {
+    input_ShowStatusMessage(editor, "[+] Archivo guardado exitosamente");
+  }
+
   editor->current_state = State_WaitingCommand; // Volver al estado de espera
 }
 
