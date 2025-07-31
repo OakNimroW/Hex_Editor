@@ -40,7 +40,6 @@ uint8_t output_Init(hex_editor_t *editor) {
 // Mostrar contenido hexadecimal del archivo
 void output_DisplayHexContent(hex_editor_t *editor) {
   if (!editor->file_data || editor->file_size == 0) {
-    // Ya no mostramos mensaje aquí, se maneja en la ventana de comandos
     return;
   }
 
@@ -70,7 +69,18 @@ void output_DisplayHexContent(hex_editor_t *editor) {
     for (int i = 0; i < bytes_per_line && (offset + i) < editor->file_size;
          i++) {
       uint8_t byte = editor->file_data[offset + i];
+
+      if ((offset + i) == editor->cursor_position) {
+        // Activar modo inverso para resaltar el cursor
+        wattron(editor->hex_window, A_REVERSE);
+      }
+
       mvwprintw(editor->hex_window, line, hex_col, "%02x", byte);
+
+      if ((offset + i) == editor->cursor_position) {
+        wattroff(editor->hex_window, A_REVERSE);
+      }
+
       hex_col += 2;
 
       // Agregar espacio cada 2 bytes para mejor legibilidad
@@ -86,12 +96,21 @@ void output_DisplayHexContent(hex_editor_t *editor) {
          i++) {
       uint8_t byte = editor->file_data[offset + i];
       char ascii_char = (byte >= 32 && byte <= 126) ? byte : '.';
+
+      if ((offset + i) == editor->cursor_position) {
+        wattron(editor->hex_window, A_REVERSE);
+      }
+
       mvwprintw(editor->hex_window, line, ascii_col + i, "%c", ascii_char);
+
+      if ((offset + i) == editor->cursor_position) {
+        wattroff(editor->hex_window, A_REVERSE);
+      }
     }
 
     line++;
 
-    // No mostrar más líneas si llegamos al límite de la ventana
+    // No mostrar más líneas si se llega al límite de la ventana
     if (line >= getmaxy(editor->hex_window) - 1) {
       break;
     }
@@ -102,6 +121,7 @@ void output_DisplayHexContent(hex_editor_t *editor) {
   mvwprintw(editor->hex_window, 0, 2, " HEX EDITOR - %s ",
             editor->filename ? editor->filename : "Sin archivo");
 }
+
 // Mostrar mensaje en la ventana hex-editor
 void output_ShowMessage(hex_editor_t *editor, const char *message) {
   // Limpiar área de contenido

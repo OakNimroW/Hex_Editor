@@ -37,6 +37,7 @@ typedef struct {
   uint8_t *file_data;           // Datos del archivo en memoria
   size_t file_size;             // Tamaño del archivo
   size_t current_offset;        // Offset actual para navegación
+  size_t cursor_position;       // Posición actual del cursor en el archivo
 } hex_editor_t;
 
 #endif
