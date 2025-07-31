@@ -40,8 +40,7 @@ uint8_t output_Init(hex_editor_t *editor) {
 // Mostrar contenido hexadecimal del archivo
 void output_DisplayHexContent(hex_editor_t *editor) {
   if (!editor->file_data || editor->file_size == 0) {
-    output_ShowMessage(
-        editor, "[!] No hay archivo cargado. Uso: ./hex_editor [archivo]");
+    // Ya no mostramos mensaje aquí, se maneja en la ventana de comandos
     return;
   }
 
@@ -63,11 +62,11 @@ void output_DisplayHexContent(hex_editor_t *editor) {
        offset < editor->file_size && offset < start_offset + max_bytes;
        offset += bytes_per_line) {
 
-    // Mostrar offset
-    mvwprintw(editor->hex_window, line, 2, "%08zx: ", offset);
+    // Mostrar offset con 4 espacios después del ":"
+    mvwprintw(editor->hex_window, line, 2, "%08zx:    ", offset);
 
-    // Mostrar bytes en hexadecimal
-    int hex_col = 11;
+    // Ajustar posición inicial del contenido hex
+    int hex_col = 15; // 11 + 4 espacios
     for (int i = 0; i < bytes_per_line && (offset + i) < editor->file_size;
          i++) {
       uint8_t byte = editor->file_data[offset + i];
@@ -81,8 +80,8 @@ void output_DisplayHexContent(hex_editor_t *editor) {
       }
     }
 
-    // Mostrar representación ASCII
-    int ascii_col = 11 + (bytes_per_line * 2) + (bytes_per_line / 2) + 2;
+    // Ajustar posición de la representación ASCII
+    int ascii_col = 15 + (bytes_per_line * 2) + (bytes_per_line / 2) + 3;
     for (int i = 0; i < bytes_per_line && (offset + i) < editor->file_size;
          i++) {
       uint8_t byte = editor->file_data[offset + i];
@@ -103,7 +102,6 @@ void output_DisplayHexContent(hex_editor_t *editor) {
   mvwprintw(editor->hex_window, 0, 2, " HEX EDITOR - %s ",
             editor->filename ? editor->filename : "Sin archivo");
 }
-
 // Mostrar mensaje en la ventana hex-editor
 void output_ShowMessage(hex_editor_t *editor, const char *message) {
   // Limpiar área de contenido

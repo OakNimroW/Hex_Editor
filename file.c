@@ -6,6 +6,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "file.h"
+#include "input.h"
 #include <stdio.h>
 
 //===----------------------------------------------------------------------===//
@@ -14,11 +15,15 @@
 
 int file_Load(hex_editor_t *editor) {
   if (!editor || !editor->filename) {
+    if (editor) {
+      input_ShowStatusMessage(editor, "[!] Error: No se especificó archivo");
+    }
     return 1;
   }
 
   FILE *file = fopen(editor->filename, "rb");
   if (!file) {
+    input_ShowStatusMessage(editor, "[!] Error: No se pudo abrir el archivo");
     return 1;
   }
 
@@ -31,6 +36,7 @@ int file_Load(hex_editor_t *editor) {
   editor->file_data = malloc(editor->file_size);
   if (!editor->file_data) {
     fclose(file);
+    input_ShowStatusMessage(editor, "[!] Error: No se pudo asignar memoria");
     return 1;
   }
 
@@ -41,9 +47,12 @@ int file_Load(hex_editor_t *editor) {
   if (bytes_read != editor->file_size) {
     free(editor->file_data);
     editor->file_data = NULL;
+    input_ShowStatusMessage(editor,
+                            "[!] Error: No se pudo leer el archivo completo");
     return 1;
   }
 
+  input_ShowStatusMessage(editor, "[+] Archivo cargado correctamente");
   return 0;
 }
 

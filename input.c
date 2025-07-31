@@ -22,7 +22,6 @@
 
 // Inicializar ventana de comandos
 uint8_t input_Init(hex_editor_t *editor) {
-
   uint16_t cmd_height = (editor->max_y * CMD_WINDOW_PERCENT) / 100;
   uint16_t hex_height = editor->max_y - cmd_height;
 
@@ -41,7 +40,19 @@ uint8_t input_Init(hex_editor_t *editor) {
             "Comandos: q=salir, s=guardar, e=editar, h=ayuda");
   mvwprintw(editor->command_window, 3, 2, "Ingresa un comando: ");
 
+  mvwprintw(editor->command_window, 5, 2, "Estado: Listo");
+
   return 0;
+}
+
+void input_ShowStatusMessage(hex_editor_t *editor, const char *message) {
+  // Limpiar la línea 5 primero
+  mvwhline(editor->command_window, 5, 2, ' ',
+           getmaxx(editor->command_window) - 4);
+
+  // Mostrar el nuevo mensaje
+  mvwprintw(editor->command_window, 5, 10, "%s", message);
+  wrefresh(editor->command_window);
 }
 
 // Obtener comando del usuario
@@ -67,6 +78,7 @@ void input_ShowCommand(hex_editor_t *editor, uint8_t command) {
 void input_Refresh(hex_editor_t *editor) {
   // Limpiar línea de comando
   mvwprintw(editor->command_window, 3, 2, "Ingresa un comando: ");
+  mvwprintw(editor->command_window, 5, 2, "Estado: ");
 
   // Redibujar borde y título
   box(editor->command_window, 0, 0);

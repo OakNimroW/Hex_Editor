@@ -34,28 +34,31 @@ void controller_WaitingCommandFn(hex_editor_t *editor, uint8_t command) {
   case 'q':
   case 'Q':
     editor->current_state = State_Exit;
+    input_ShowStatusMessage(editor, "[*] Saliendo del editor...");
     exitFn(editor);
     break;
 
   case 's':
   case 'S':
     editor->current_state = State_SaveFile;
+    input_ShowStatusMessage(editor, "[*] Iniciando guardado de archivo...");
     break;
 
   case 'e':
   case 'E':
     editor->current_state = State_EditByte;
-    output_ShowMessage(editor, "[*] Edit byte: Ingresar byte...");
+    input_ShowStatusMessage(editor, "[*] Modo edición: Ingrese nuevo byte...");
     break;
 
   case 'h':
   case 'H':
     editor->current_state = State_ShowHelp;
+    input_ShowStatusMessage(editor, "[*] Mostrando menú de ayuda...");
     break;
 
   default:
     if (command >= 32 && command <= 126) {
-      output_ShowMessage(editor, "[!] Comando no encontrado");
+      input_ShowStatusMessage(editor, "[!] Comando no encontrado");
     }
     break;
   }
@@ -63,19 +66,20 @@ void controller_WaitingCommandFn(hex_editor_t *editor, uint8_t command) {
 
 void controller_EditByteFn(hex_editor_t *editor, uint8_t user_input) {
   (void)user_input; // Ignorar entrada del usuario en este estado
-  output_ShowMessage(editor, "[*] Editando byte...");
+  input_ShowStatusMessage(editor, "[+] Byte editado correctamente");
   editor->current_state = State_WaitingCommand; // Volver al estado de espera
 }
 
 void controller_SaveFileFn(hex_editor_t *editor, uint8_t user_input) {
   (void)user_input; // Ignorar entrada del usuario en este estado
-  output_ShowMessage(editor, "[+] Guardando archivo...");
+  input_ShowStatusMessage(editor, "[+] Archivo guardado exitosamente");
   editor->current_state = State_WaitingCommand; // Volver al estado de espera
 }
 
 void controller_ShowHelpFn(hex_editor_t *editor, uint8_t user_input) {
   (void)user_input; // Ignorar entrada del usuario en este estado
-  output_ShowMessage(editor, "[+] Mostrando menu de ayuda...");
+  input_ShowStatusMessage(editor,
+                          "[+] Ayuda: q=salir, s=guardar, e=editar, h=ayuda");
   editor->current_state = State_WaitingCommand; // Volver al estado de espera
 }
 
@@ -101,15 +105,6 @@ uint8_t controller_Init(hex_editor_t *editor) {
   editor->running = 1;
   editor->current_offset = 0;
 
-  // Cargar archivo si se proporciona
-  if (editor->filename) {
-    if (file_Load(editor) != 0) {
-      // No terminar el programa, solo mostrar error
-      // El editor seguirá funcionando sin archivo
-      output_ShowMessage(editor, "[+] No se ha cargado un archivo.");
-    }
-  }
-
   // Inicializar ncurses y ventanas
   initscr();            // Inicializar ncurses
   cbreak();             // Desactivar el modo de línea
@@ -128,6 +123,18 @@ uint8_t controller_Init(hex_editor_t *editor) {
     input_Cleanup(editor);
     endwin();
     return -1;
+  }
+
+  // Cargar archivo si se proporciona
+  if (editor->filename) {
+    if (file_Load(editor) != 0) {
+      // No terminar el programa, solo mostrar error
+      // El editor seguirá funcionando sin archivo
+      input_ShowStatusMessage(editor, "[!] No se pudo cargar el archivo");
+    }
+  } else {
+    input_ShowStatusMessage(editor,
+                            "[*] Editor iniciado - No hay archivo cargado");
   }
 
   // Mostrar interfaz inicial
@@ -152,6 +159,6 @@ void controller_Update(hex_editor_t *editor, uint8_t user_input) {
   output_Refresh(editor);
   input_Refresh(editor);
 
-  // Mostrar el comando inmediatamente
+  // Mostrar el comando inmediatamente en línea de entrada
   input_ShowCommand(editor, user_input);
 }

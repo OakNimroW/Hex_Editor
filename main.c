@@ -20,8 +20,16 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
-  // Guardar nombre del archivo si se proporciona
+  // NUEVO: Validar longitud del nombre del archivo
   if (argc == 2) {
+    size_t filename_length = strlen(argv[1]);
+    if (filename_length > 144) {
+      fprintf(stderr,
+              "[!] Error: El nombre del archivo supera los 144 caracteres (%zu "
+              "caracteres).\n",
+              filename_length);
+      return EXIT_FAILURE;
+    }
     editor.filename = argv[1];
   }
 
