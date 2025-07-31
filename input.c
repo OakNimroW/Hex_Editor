@@ -52,6 +52,20 @@ void input_ShowStatusMessage(hex_editor_t *editor, const char *message) {
 
   // Mostrar el nuevo mensaje
   mvwprintw(editor->command_window, 5, 11, "%s", message);
+
+  // Si estamos en modo edición, mostrar también en línea 6 lo que se está
+  // escribiendo
+  if (editor->current_state == State_EditByte && editor->edit_char_count > 0) {
+    mvwhline(editor->command_window, 6, 2, ' ',
+             getmaxx(editor->command_window) - 4);
+    mvwprintw(editor->command_window, 6, 2, "Escribiendo: %s",
+              editor->edit_buffer);
+  } else {
+    // Limpiar línea 6 si no estamos editando
+    mvwhline(editor->command_window, 6, 2, ' ',
+             getmaxx(editor->command_window) - 4);
+  }
+
   wrefresh(editor->command_window);
 }
 

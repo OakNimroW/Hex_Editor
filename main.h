@@ -38,6 +38,7 @@ typedef struct {
   size_t file_size;             // Tamaño del archivo
   size_t current_offset;        // Offset actual para navegación
   size_t cursor_position;       // Posición actual del cursor en el archivo
+  char edit_buffer[3];          // Buffer para almacenar los 2 chars hex + '\0'
+  int edit_char_count; // Contador de caracteres ingresados en modo edición
 } hex_editor_t;
-
 #endif

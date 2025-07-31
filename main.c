@@ -20,7 +20,6 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
-  // NUEVO: Validar longitud del nombre del archivo
   if (argc == 2) {
     size_t filename_length = strlen(argv[1]);
     if (filename_length > 144) {
@@ -46,7 +45,6 @@ int main(int argc, char *argv[]) {
     if (editor.current_state != State_SaveFile &&
         editor.current_state != State_ShowHelp &&
         editor.current_state != State_Exit) {
-      // Leer input del usuario.
       ch = input_GetCommand(&editor);
     }
 

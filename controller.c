@@ -25,6 +25,37 @@ static void exitFn(hex_editor_t *editor) {
   endwin();
 }
 
+// Verificar si un carácter es un dígito hexadecimal
+static int isHexChar(char c) {
+  return ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') ||
+          (c >= 'a' && c <= 'f'));
+}
+
+// Convertir carácter hex a valor numérico
+static int hexCharToValue(char c) {
+  if (c >= '0' && c <= '9')
+    return c - '0';
+  if (c >= 'A' && c <= 'F')
+    return c - 'A' + 10;
+  if (c >= 'a' && c <= 'f')
+    return c - 'a' + 10;
+  return -1; // Error
+}
+
+// Función para convertir string hex a byte
+static int hexStringToByte(const char *hex_str) {
+  if (strlen(hex_str) != 2)
+    return -1;
+
+  int high = hexCharToValue(hex_str[0]);
+  int low = hexCharToValue(hex_str[1]);
+
+  if (high == -1 || low == -1)
+    return -1;
+
+  return (high << 4) | low;
+}
+
 //===----------------------------------------------------------------------===//
 // Funciones de navegación
 //===----------------------------------------------------------------------===//
@@ -147,8 +178,18 @@ void controller_WaitingCommandFn(hex_editor_t *editor, uint8_t command) {
 
   case 'e':
   case 'E':
-    editor->current_state = State_EditByte;
-    input_ShowStatusMessage(editor, "[*] Modo edición: Ingrese nuevo byte...");
+    if (!editor->file_data || editor->file_size == 0) {
+      input_ShowStatusMessage(editor, "[!] No hay archivo cargado para editar");
+    } else if (editor->cursor_position >= editor->file_size) {
+      input_ShowStatusMessage(editor,
+                              "[!] Posición del cursor fuera del archivo");
+    } else {
+      editor->current_state = State_EditByte;
+      editor->edit_char_count = 0;
+      editor->edit_buffer[0] = '\0';
+      input_ShowStatusMessage(
+          editor, "[*] Modo edición: Ingrese 2 dígitos hex (ej: FF, A0, 1B)");
+    }
     break;
 
   case 'h':
@@ -216,9 +257,95 @@ void controller_WaitingCommandFn(hex_editor_t *editor, uint8_t command) {
 }
 
 void controller_EditByteFn(hex_editor_t *editor, uint8_t user_input) {
-  (void)user_input; // Ignorar entrada del usuario en este estado
-  input_ShowStatusMessage(editor, "[+] Byte editado correctamente");
-  editor->current_state = State_WaitingCommand; // Volver al estado de espera
+  // Verificar que tenemos archivo cargado
+  if (!editor->file_data || editor->file_size == 0) {
+    input_ShowStatusMessage(editor, "[!] No hay archivo cargado");
+    editor->current_state = State_WaitingCommand;
+    return;
+  }
+
+  // Verificar posición del cursor
+  if (editor->cursor_position >= editor->file_size) {
+    input_ShowStatusMessage(editor,
+                            "[!] Posición del cursor fuera del archivo");
+    editor->current_state = State_WaitingCommand;
+    return;
+  }
+
+  // Manejar ESC para cancelar edición
+  if (user_input == 27) { // ESC
+    input_ShowStatusMessage(editor, "[*] Edición cancelada");
+    editor->edit_char_count = 0;
+    editor->edit_buffer[0] = '\0';
+    editor->current_state = State_WaitingCommand;
+    return;
+  }
+
+  // Manejar Backspace para borrar último carácter
+  if (user_input == 8 || user_input == 127) { // Backspace o DEL
+    if (editor->edit_char_count > 0) {
+      editor->edit_char_count--;
+      editor->edit_buffer[editor->edit_char_count] = '\0';
+
+      if (editor->edit_char_count == 0) {
+        input_ShowStatusMessage(
+            editor, "[*] Modo edición: Ingrese 2 dígitos hex (ej: FF, A0, 1B)");
+      } else {
+        char msg[100] = {0};
+        snprintf(msg, sizeof(msg),
+                 "[*] Editando: %s_ (ingrese el segundo dígito)",
+                 editor->edit_buffer);
+        input_ShowStatusMessage(editor, msg);
+      }
+    }
+    return;
+  }
+
+  // Verificar si es carácter hexadecimal válido
+  if (!isHexChar(user_input)) {
+    input_ShowStatusMessage(
+        editor, "[!] Carácter inválido. Solo dígitos hex: 0-9, A-F, a-f");
+    return;
+  }
+
+  // Agregar carácter al buffer
+  editor->edit_buffer[editor->edit_char_count] = user_input;
+  editor->edit_char_count++;
+  editor->edit_buffer[editor->edit_char_count] = '\0';
+
+  // Mostrar progreso
+  if (editor->edit_char_count == 1) {
+    char msg[100] = {0};
+    snprintf(msg, sizeof(msg), "[*] Editando: %s_ (ingrese el segundo dígito)",
+             editor->edit_buffer);
+    input_ShowStatusMessage(editor, msg);
+  } else if (editor->edit_char_count == 2) {
+    // Tenemos 2 caracteres, procesar el byte
+    int new_byte_value = hexStringToByte(editor->edit_buffer);
+
+    if (new_byte_value == -1) {
+      // Error de conversión (no debería pasar si isHexChar funciona bien)
+      input_ShowStatusMessage(editor, "[!] Error interno: valor hex inválido");
+      editor->edit_char_count = 0;
+      editor->edit_buffer[0] = '\0';
+    } else {
+      // Actualizar el byte en el archivo
+      uint8_t old_value = editor->file_data[editor->cursor_position];
+      editor->file_data[editor->cursor_position] = (uint8_t)new_byte_value;
+
+      // Mostrar confirmación
+      char msg[100] = {0};
+      snprintf(msg, sizeof(msg),
+               "[+] Byte editado: 0x%02X -> 0x%02X en posición 0x%08zX",
+               old_value, new_byte_value, editor->cursor_position);
+      input_ShowStatusMessage(editor, msg);
+
+      // Limpiar buffer y volver al modo normal
+      editor->edit_char_count = 0;
+      editor->edit_buffer[0] = '\0';
+      editor->current_state = State_WaitingCommand;
+    }
+  }
 }
 
 void controller_SaveFileFn(hex_editor_t *editor, uint8_t user_input) {
@@ -230,7 +357,7 @@ void controller_SaveFileFn(hex_editor_t *editor, uint8_t user_input) {
 void controller_ShowHelpFn(hex_editor_t *editor, uint8_t user_input) {
   (void)user_input; // Ignorar entrada del usuario en este estado
   input_ShowStatusMessage(
-      editor, "[+] Ayuda: Flechas=navegar, q=salir, s=guardar, e=editar");
+      editor, "[+] Ayuda: Flechas=navegar, q=salir, s=guardar, e=editar byte");
   editor->current_state = State_WaitingCommand; // Volver al estado de espera
 }
 //===----------------------------------------------------------------------===//
@@ -255,6 +382,9 @@ uint8_t controller_Init(hex_editor_t *editor) {
   editor->running = 1;
   editor->current_offset = 0;
   editor->cursor_position = 0;
+
+  editor->edit_buffer[0] = '\0';
+  editor->edit_char_count = 0;
 
   // Inicializar ncurses y ventanas
   initscr();            // Inicializar ncurses
