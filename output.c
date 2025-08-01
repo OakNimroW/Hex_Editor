@@ -61,11 +61,11 @@ void output_DisplayHexContent(hex_editor_t *editor) {
        offset < editor->file_size && offset < start_offset + max_bytes;
        offset += bytes_per_line) {
 
-    // Mostrar offset con 4 espacios después del ":"
+    // Mostrar offset
     mvwprintw(editor->hex_window, line, 2, "%08zx:    ", offset);
 
     // Ajustar posición inicial del contenido hex
-    int hex_col = 15; // 11 + 4 espacios
+    int hex_col = 15; // 11 caracteres + 4 espacios
     for (int i = 0; i < bytes_per_line && (offset + i) < editor->file_size;
          i++) {
       uint8_t byte = editor->file_data[offset + i];

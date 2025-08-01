@@ -264,7 +264,8 @@ void controller_EditByteFn(hex_editor_t *editor, uint8_t user_input) {
   }
 
   // Manejar ESC para cancelar edición
-  if (user_input == 27) { // ESC
+  if (user_input == 27 || user_input == 'q' ||
+      user_input == 'Q') { // ESC o `q` para cancelar
     input_ShowStatusMessage(editor, "[*] Edición cancelada");
     editor->edit_char_count = 0;
     editor->edit_buffer[0] = '\0';
